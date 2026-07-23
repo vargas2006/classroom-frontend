@@ -5,7 +5,7 @@ export type Subject = {
     code: string;
     description: string;
     department: string;
-    createdAt?: string;
+    createdAt: string;
 };
 
 export type ListResponse<T = unknown> = {
