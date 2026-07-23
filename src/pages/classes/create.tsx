@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "@refinedev/react-hook-form";
 import { classSchema } from "@/lib/schema";
-import * as z from "zod";
 import UploadWidget from "@/components/upload-widget";
 
 import {
