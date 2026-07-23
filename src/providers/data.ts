@@ -1,47 +1,50 @@
-import { DataProvider, GetListParams, GetListResponse, BaseRecord } from "@refinedev/core";
-import { Subject } from '../types/index'
+import { createDataProvider, CreateDataProviderOptions } from '@refinedev/rest';
+import { BACKEND_BASE_URL } from '@/constants';
+import { ListResponse } from '@/types';
 
-export const dataProvider: DataProvider = {
-  getList: async <TData extends BaseRecord = BaseRecord>({
-    resource}: GetListParams): Promise<GetListResponse<TData>> => {
-      if(resource !== 'subjects')return { data: [] as TData[], total: 0};
-
-      const subjects: Subject[] = [
-        {
-          id: 1,
-          code: "CS101",
-          name: "Introduction to Computer Science",
-          department: "CS",
-          description: "An overview of computing concepts, programming fundamentals, and problem-solving techniques using Python.",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          code: "MATH201",
-          name: "Linear Algebra",
-          department: "MATH",
-          description: "A study of vector spaces, linear transformations, matrices, eigenvalues, and their applications in engineering and science.",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 3,
-          code: "ENG105",
-          name: "Academic Writing and Research",
-          department: "ENGLISH",
-          description: "Develops critical thinking and academic writing skills, focusing on research methodologies, argumentation, and citing sources properly.",
-          createdAt: new Date().toISOString()
-        }
-      ];
-
-      return{
-        data: subjects as unknown as TData[],
-        total: subjects.length,
-      }
-    },
-    getOne: async () => {throw new Error('This function is not present in mock')},
-    create: async () => {throw new Error('This function is not present in mock')},
-    update: async () => {throw new Error('This function is not present in mock')},
-    deleteOne: async () => {throw new Error('This function is not present in mock')},
-
-    getApiUrl: () => '',
+if(!BACKEND_BASE_URL) {
+  throw new Error('BACKEND_BASE_URL is not configured. please se VITE_BACKEND_BASE_URL in your .env file')
 }
+const options: CreateDataProviderOptions = {
+  getList: {
+    getEndpoint: ({ resource }) => resource,
+
+    buildQueryParams: async ({ resource, pagination, filters }) => {
+      const page = pagination?.currentPage ?? 1;
+      const pageSize = pagination?.pageSize ?? 10;
+
+      const params: Record<string, unknown> = { page, limit: pageSize };
+
+      filters?.forEach((filter) => {
+        const field = 'field' in filter ? filter.field : '';
+        const value = String(filter.value);
+
+        if (resource === 'subjects') {
+          if (field === 'department') {
+            params.department = value;
+          } else if (field === 'name' || field === 'code') {
+            params.search = value;
+          } else if (field && value) {
+            params[field] = value;
+          }
+        } else if (field && value) {
+          params[field] = value;
+        }
+      });
+      return params;
+    },
+
+    mapResponse: async (response) => {
+      const payload: ListResponse = await response.clone().json();
+      return payload.data ?? [];
+    },
+    getTotalCount: async (response) => {
+      const payload: ListResponse = await response.clone().json();
+      return payload.pagination?.totalCount ?? payload.pagination?.total ?? payload.data?.length ?? 0;
+    },
+  },
+};
+
+const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options);
+
+export { dataProvider };
