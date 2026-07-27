@@ -56,7 +56,17 @@ const Create = () => {
 
     const onSubmit = async (values: any) => {
         try {
-            await onFinish(values);
+            const formValues = form.getValues();
+            const bannerUrl = formValues.bannerUrl || values.bannerUrl || null;
+            const bannerCldPubId = formValues.bannerCldPubId || values.bannerCldPubId || null;
+
+            const payload = {
+                ...formValues,
+                ...values,
+                bannerUrl,
+                bannerCldPubId,
+            };
+            await onFinish(payload);
         } catch (error) {
             console.error("Error creating class:", error);
         }
@@ -88,21 +98,34 @@ const teachersLoading = teachersQuery.isLoading;
 
     const bannerPublicId = form.watch("bannerCldPubId");
     const setBannerImage = (file: any, field: any) => {
-      if(file){
-        field.onChange(file.url)
-        form.setValue('bannerCldPubId', file.publicId, {
+      if (file) {
+        const url = typeof file === 'string' ? file : file.url;
+        const publicId = typeof file === 'object' ? file.publicId : '';
+        field.onChange(url);
+        form.setValue('bannerUrl', url, {
           shouldValidate: true,
-          shouldDirty: true
-        })
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        form.setValue('bannerCldPubId', publicId, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
       } else {
         field.onChange('');
+        form.setValue('bannerUrl', '', {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
         form.setValue('bannerCldPubId', '', {
           shouldValidate: true,
           shouldDirty: true,
-        })
+          shouldTouch: true,
+        });
       }
-
-    }
+    };
     return (
         <CreateView className="class-view">
             <Breadcrumb />
@@ -128,6 +151,8 @@ const teachersLoading = teachersQuery.isLoading;
                     <CardContent className="mt-7">
                         <Form {...form}>
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                                <input type="hidden" {...form.register("bannerUrl")} />
+                                <input type="hidden" {...form.register("bannerCldPubId")} />
                                 <FormField 
                                 control={control}
                                 render={({field}) => (

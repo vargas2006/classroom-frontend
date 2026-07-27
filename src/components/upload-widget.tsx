@@ -1,13 +1,18 @@
 import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '@/constants';
-import { UploadWidgetValue, } from '@/types';
+import { UploadWidgetValue, UploadWidgetProps } from '@/types';
 import { UploadCloud } from 'lucide-react';
 import {useState, useRef, useEffect} from 'react'
 
-const UploadWidget = ({value = null, onChange, disable= false}) => {
+interface ExtendedUploadWidgetProps extends UploadWidgetProps {
+    disable?: boolean;
+}
+
+const UploadWidget = ({value = null, onChange, disable = false}: ExtendedUploadWidgetProps) => {
     const widgetRef = useRef<CloudinaryWidget | null>(null)
     const onCHangeRef = useRef(onChange);
     
-    const [preview, setPreview] = useState<UploadWidgetValue | null>(value)
+    const [preview, setPreview] = useState<UploadWidgetValue | null>(value);
+    const [deleteToken, setDeleteToken] = useState<string | null>(null);
 
 
 
@@ -68,7 +73,7 @@ const UploadWidget = ({value = null, onChange, disable= false}) => {
     return (
         <div className="space-y-2">
             {preview ? (
-                <div className="upload-preview">
+                <div className="upload-preview cursor-pointer" role="button" tabIndex={0} onClick={openWidget}>
                     <img src={preview.url} alt="preview" />
                 </div>
             ) : <div className="upload-dropzone" role="button" tabIndex={0}
