@@ -16,7 +16,6 @@ const ShowClass= () => {
     const classDetails = query.data?.data;
 
     const {isLoading, isError} = query
-    console.log(classDetails)
     if(isLoading || isError || !classDetails) {
         return (
             <ShowView className="class-view class-show">
@@ -54,7 +53,13 @@ department,
         <ShowViewHeader resource="classes" title="classDetails"/>
 
         <div className="banner">
-            {bannerUrl ? <AdvancedImage alt="class Banner" cldImg={bannerPhoto (bannerCldPubId  ?? '', name)} />  : <div className="placeholder" /> }
+            {bannerCldPubId ? (
+                <AdvancedImage alt="class Banner" cldImg={bannerPhoto(bannerCldPubId, name)} />
+            ) : bannerUrl ? (
+                <img src={bannerUrl} alt="class Banner" />
+            ) : (
+                <div className="placeholder" />
+            )}
         </div>
 
         <Card className="details-card">

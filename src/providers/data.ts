@@ -92,7 +92,10 @@ const options: CreateDataProviderOptions = {
     mapResponse: async (response) => {
       const json: GetOneResponse = await response.json();
 
-      return json.data ?? [];
+      if (json.data == null) {
+        throw new Error("Get-one response did not contain data");
+      }
+      return json.data;
     }
   }
 };
