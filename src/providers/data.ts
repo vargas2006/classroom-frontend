@@ -2,6 +2,7 @@ import { createDataProvider, CreateDataProviderOptions } from '@refinedev/rest';
 import { BACKEND_BASE_URL } from '@/constants';
 import { CreateResponse, ListResponse } from '@/types';
 import { HttpError } from '@refinedev/core';
+import type { GetOneResponse } from '@/types';
 
 if(!BACKEND_BASE_URL) {
   throw new Error('BACKEND_BASE_URL is not configured. please se VITE_BACKEND_BASE_URL in your .env file')
@@ -56,7 +57,6 @@ const options: CreateDataProviderOptions = {
             params[field] = value;
           }
         } else if (field && value) {
-          
           params[field] = value;
         }
       });
@@ -71,7 +71,7 @@ const options: CreateDataProviderOptions = {
     getTotalCount: async (response) => {
       if (!response.ok) return 0;
       const payload: ListResponse = await response.clone().json();
-      return payload.pagination?.totalCount ?? payload.pagination?.total ?? payload.data?.length ?? 0;
+      return payload.pagination?.total ?? payload.pagination?.totalCount ?? payload.data?.length ?? 0;
     },
   },
 
@@ -85,7 +85,19 @@ const options: CreateDataProviderOptions = {
 
       return json.data ?? []
     }
-   }
+  },
+  getOne: {
+    getEndpoint: ({resource, id}) => `${resource}/${id}`,
+
+    mapResponse: async (response) => {
+      const json: GetOneResponse = await response.json();
+
+      if (json.data == null) {
+        throw new Error("Get-one response did not contain data");
+      }
+      return json.data;
+    }
+  }
 };
 
 const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options);

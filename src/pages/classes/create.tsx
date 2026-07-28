@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { CreateView } from "@/components/refine-ui/views/create-view";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -72,22 +73,27 @@ const Create = () => {
         }
     };
 
-const { query: subjectsQuery} = useList<Subject> ({
+const teacherFilters = useMemo(
+    () => [{ field: 'role', operator: 'eq' as const, value: 'teacher' }],
+    []
+);
+
+const { query: subjectsQuery } = useList<Subject>({
     resource: "subjects",
     pagination: {
         pageSize: 100,
     },
-})
+    queryOptions: { retry: 1, refetchOnWindowFocus: false },
+});
 
-const { query: teachersQuery} = useList<User> ({
+const { query: teachersQuery } = useList<User>({
     resource: "users",
-    filters: [
-        {field: 'role', operator: 'eq', value: 'teacher'}
-    ],
+    filters: teacherFilters,
     pagination: {
         pageSize: 100,
     },
-})
+    queryOptions: { retry: 1, refetchOnWindowFocus: false },
+});
 
 const subjects = subjectsQuery?.data?.data || [];
 const subjectsLoading = subjectsQuery.isLoading;
@@ -253,11 +259,11 @@ const teachersLoading = teachersQuery.isLoading;
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {teachers.map((teacher) => (
-                                                            <SelectItem
-                                                                key={teacher.id}
-                                                                value={teacher.id.toString()}
-                                                            >
+                                                         {teachers.map((teacher) => (
+                                                             <SelectItem
+                                                                 key={teacher.id}
+                                                                 value={teacher.id?.toString() ?? ''}
+                                                             >
                                                                 {teacher.name}
                                                             </SelectItem>
                                                         ))}

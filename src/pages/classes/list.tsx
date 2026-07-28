@@ -16,37 +16,45 @@ import { useList } from '@refinedev/core';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { ClassDetails, Subject, User } from '@/types';
+import { ShowButton } from '@/components/refine-ui/buttons/show';
 
 const ClassList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSubject, setSelectedSubject] = useState('all');
     const [selectedTeacher, setSelectedTeacher] = useState('all');
 
-    // ── Filter arrays passed to useTable ─────────────────────────────
-    const searchFilters = searchQuery
-        ? [{ field: 'name', operator: 'contains' as const, value: searchQuery }]
-        : [];
+    // ── Filter arrays passed to useTable (memoized for reference stability) ──
+    const permanentFilters = useMemo(() => {
+        const filters = [];
+        if (searchQuery) {
+            filters.push({ field: 'name', operator: 'contains' as const, value: searchQuery });
+        }
+        if (selectedSubject !== 'all') {
+            filters.push({ field: 'subject', operator: 'eq' as const, value: selectedSubject });
+        }
+        if (selectedTeacher !== 'all') {
+            filters.push({ field: 'teacher', operator: 'eq' as const, value: selectedTeacher });
+        }
+        return filters;
+    }, [searchQuery, selectedSubject, selectedTeacher]);
 
-    const subjectFilters =
-        selectedSubject !== 'all'
-            ? [{ field: 'subject', operator: 'eq' as const, value: selectedSubject }]
-            : [];
-
-    const teacherFilters =
-        selectedTeacher !== 'all'
-            ? [{ field: 'teacher', operator: 'eq' as const, value: selectedTeacher }]
-            : [];
+    const teacherRoleFilter = useMemo(
+        () => [{ field: 'role', operator: 'eq' as const, value: 'teacher' }],
+        []
+    );
 
     // ── Fetch filter-dropdown options ─────────────────────────────────
     const subjectsQuery = useList<Subject>({
         resource: 'subjects',
         pagination: { pageSize: 200 },
+        queryOptions: { retry: 1, refetchOnWindowFocus: false },
     });
 
     const teachersQuery = useList<User>({
         resource: 'users',
-        filters: [{ field: 'role', operator: 'eq', value: 'teacher' }],
+        filters: teacherRoleFilter,
         pagination: { pageSize: 200 },
+        queryOptions: { retry: 1, refetchOnWindowFocus: false },
     });
 
     const subjects = subjectsQuery.result?.data ?? [];
@@ -135,6 +143,12 @@ const ClassList = () => {
                         <span className="text-foreground">{getValue<number>() ?? '-'}</span>
                     ),
                 },
+                {
+                    id: 'details',
+                    size: 140,
+                    header: () => <p className="column-title">Details</p>,
+                    cell: ({row}) => <ShowButton resource="classes" recordItemId={row.original.id} variant="outline" size="sm">View</ShowButton>
+                }
             ],
             []
         ),
@@ -145,7 +159,11 @@ const ClassList = () => {
                 mode: 'server',
             },
             filters: {
-                permanent: [...searchFilters, ...subjectFilters, ...teacherFilters],
+                permanent: permanentFilters,
+            },
+            queryOptions: {
+                retry: 1,
+                refetchOnWindowFocus: false,
             },
             sorters: {
                 initial: [{ field: 'id', order: 'desc' }],

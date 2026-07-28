@@ -19,22 +19,25 @@ const SubjectList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedDepartment, setSelectedDepartment] = useState('all')
 
-    const departmentFilters = selectedDepartment === 'all' ? [] : [
-        {
-            field: 'department',
-            operator: 'eq' as const,
-            value: selectedDepartment,
+    const permanentFilters = useMemo(() => {
+        const filters = [];
+        if (selectedDepartment !== 'all') {
+            filters.push({
+                field: 'department',
+                operator: 'eq' as const,
+                value: selectedDepartment,
+            });
         }
-
-    ]
-    const searchFilters = searchQuery ? [
-        {
-            field: 'name',
-            operator: 'contains' as const,
-            value: searchQuery
-
+        if (searchQuery) {
+            filters.push({
+                field: 'name',
+                operator: 'contains' as const,
+                value: searchQuery,
+            });
         }
-    ] : [];
+        return filters;
+    }, [selectedDepartment, searchQuery]);
+
     const subjectTable = useTable<Subject>({
         columns: useMemo<ColumnDef<Subject>[]>(()=> [
             {
@@ -80,7 +83,11 @@ const SubjectList = () => {
                 mode: 'server',  
             },
             filters: {
-                permanent: [...departmentFilters, ...searchFilters]
+                permanent: permanentFilters
+            },
+            queryOptions: {
+                retry: 1,
+                refetchOnWindowFocus: false,
             },
             sorters: {
                 initial: [
