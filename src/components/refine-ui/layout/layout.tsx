@@ -10,25 +10,25 @@ import { Sidebar } from "./sidebar";
 export function Layout({ children }: PropsWithChildren) {
   return (
     <ThemeProvider>
-      <SidebarProvider>
+      {/*
+        defaultOpen=true  → sidebar starts expanded on desktop
+        On mobile the SidebarProvider automatically handles it as an overlay drawer
+      */}
+      <SidebarProvider defaultOpen={true}>
         <Sidebar />
-        <SidebarInset>
+        <SidebarInset className="min-h-screen flex flex-col">
           <Header />
           <main
             className={cn(
               "@container/main",
-              "container",
+              "flex-1",
+              "w-full",
               "mx-auto",
               "relative",
-              "w-full",
-              "flex",
-              "flex-col",
-              "flex-1",
-              "px-2",
-              "pt-4",
-              "md:p-4",
-              "lg:px-6",
-              "lg:pt-6"
+              // Responsive padding
+              "p-3 sm:p-4 md:p-5 lg:p-6",
+              // Max width for very wide screens
+              "max-w-screen-2xl"
             )}
           >
             {children}

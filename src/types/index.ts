@@ -5,6 +5,7 @@ export type Subject = {
     code: string;
     description: string;
     department: string;
+    departmentId: number;
     createdAt: string;
 };
 
@@ -93,8 +94,11 @@ export type Schedule = {
 
 export type Department = {
     id: number;
+    code: string;
     name: string;
     description: string;
+    createdAt: string;
+    updatedAt: string;
 };
 
 export type ClassDetails = {
@@ -112,6 +116,13 @@ export type ClassDetails = {
     department?: Department;
     schedules: Schedule[];
     inviteCode?: string;
+    enrollmentCount?: number;
+};
+
+export type Enrollment = {
+    studentId: string;
+    classId: number;
+    student?: User;
 };
 
 export type SignUpPayload = {
@@ -121,4 +132,34 @@ export type SignUpPayload = {
     image?: string;
     imageCldPubId?: string;
     role: UserRole;
+};
+
+export type DashboardStats = {
+    userCounts: {
+        student: number;
+        teacher: number;
+        admin: number;
+        total: number;
+    };
+    classCounts: {
+        active: number;
+        inactive: number;
+        archived: number;
+        total: number;
+    };
+    totalEnrollments: number;
+    totalDepartments: number;
+    totalSubjects: number;
+    classesByDept: { department: string; count: number }[];
+    capacityStatus: { available: number; nearFull: number; full: number };
+    monthlyClassTrend: { month: string; count: number | string }[];
+    monthlyEnrollmentTrend: { month: string; count: number | string }[];
+    monthlyEnrollments: { month: string; count: number | string }[];
+    recentClasses: {
+        id: number;
+        name: string;
+        status: string;
+        createdAt: string;
+        teacherName: string;
+    }[];
 };

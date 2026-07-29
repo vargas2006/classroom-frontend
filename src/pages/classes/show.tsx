@@ -121,7 +121,7 @@ department,
             <Button size="lg" className="w-full">Join Class</Button>
         </Card>
     </ShowView>
-  )
+)
 }
 
 export default ShowClass;

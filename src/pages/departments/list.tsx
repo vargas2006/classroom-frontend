@@ -1,91 +1,68 @@
 import React, { useMemo, useState } from 'react';
 import { ListView } from '@/components/refine-ui/views/list-view';
 import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
-import { Search, Pencil, Trash2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Building2, Trash2, Pencil } from 'lucide-react';
 import { CreateButton } from '@/components/refine-ui/buttons/create';
 import { DataTable } from '@/components/refine-ui/data-table/data-table';
 import { useTable } from '@refinedev/react-table';
-import { useList, useDelete, useNavigation } from '@refinedev/core';
-import { Subject, Department } from '@/types';
+import { Department } from '@/types';
+import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ColumnDef } from '@tanstack/react-table';
+import { useDelete, useNavigation } from '@refinedev/core';
 import {
-    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const SubjectList = () => {
+const DepartmentList = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedDepartment, setSelectedDepartment] = useState('all');
-    const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
     const { edit } = useNavigation();
     const { mutate: deleteOne } = useDelete();
 
-    // Fetch departments for filter dropdown
-    const deptQuery = useList<Department>({
-        resource: 'departments',
-        pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
-    });
-    const departments = deptQuery.query.data?.data ?? [];
-    const deptLoading = deptQuery.query.isLoading;
-
     const permanentFilters = useMemo(() => {
         const filters = [];
-        if (selectedDepartment !== 'all') {
-            filters.push({
-                field: 'department',
-                operator: 'eq' as const,
-                value: selectedDepartment, // now passes dept.name — matches backend ilike on name
-            });
-        }
         if (searchQuery) {
-            filters.push({
-                field: 'name',
-                operator: 'contains' as const,
-                value: searchQuery,
-            });
+            filters.push({ field: 'name', operator: 'contains' as const, value: searchQuery });
         }
         return filters;
-    }, [selectedDepartment, searchQuery]);
+    }, [searchQuery]);
 
-    const subjectTable = useTable<Subject>({
-        columns: useMemo<ColumnDef<Subject>[]>(() => [
+    const table = useTable<Department>({
+        columns: useMemo<ColumnDef<Department>[]>(() => [
             {
                 id: 'code',
                 accessorKey: 'code',
                 size: 100,
                 header: () => <p className="column-title ml-2">Code</p>,
-                cell: ({ getValue }) => <Badge>{getValue<string>()}</Badge>,
+                cell: ({ getValue }) => <Badge variant="outline" className="font-mono">{getValue<string>()}</Badge>,
             },
             {
                 id: 'name',
                 accessorKey: 'name',
                 size: 220,
-                header: () => <p className="column-title">Name</p>,
-                cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue<string>()}</span>,
-                filterFn: 'includesString',
-            },
-            {
-                id: 'department',
-                accessorKey: 'department',
-                size: 160,
-                header: () => <p className="column-title">Department</p>,
-                cell: ({ getValue }) => {
-                    const val = getValue<any>();
-                    const deptName = typeof val === 'object' ? val?.name : val;
-                    return <Badge variant="secondary">{deptName || '—'}</Badge>;
-                },
+                header: () => <p className="column-title">Department Name</p>,
+                cell: ({ getValue }) => (
+                    <span className="flex items-center gap-2 font-medium text-foreground">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        {getValue<string>()}
+                    </span>
+                ),
             },
             {
                 id: 'description',
                 accessorKey: 'description',
-                size: 280,
+                size: 350,
                 header: () => <p className="column-title">Description</p>,
                 cell: ({ getValue }) => (
-                    <span className="text-sm text-muted-foreground truncate line-clamp-1">
+                    <span className="text-sm text-muted-foreground line-clamp-1">
                         {getValue<string>() || '—'}
                     </span>
                 ),
@@ -99,7 +76,7 @@ const SubjectList = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => edit('subjects', row.original.id)}
+                            onClick={() => edit('departments', row.original.id)}
                         >
                             <Pencil className="h-3 w-3 mr-1" />
                             Edit
@@ -117,7 +94,7 @@ const SubjectList = () => {
             },
         ], [edit]),
         refineCoreProps: {
-            resource: 'subjects',
+            resource: 'departments',
             pagination: { pageSize: 10, mode: 'server' },
             filters: { permanent: permanentFilters },
             queryOptions: { retry: 1, refetchOnWindowFocus: false },
@@ -128,7 +105,7 @@ const SubjectList = () => {
     const handleDelete = () => {
         if (!deleteTarget) return;
         deleteOne(
-            { resource: 'subjects', id: deleteTarget.id },
+            { resource: 'departments', id: deleteTarget.id },
             { onSettled: () => setDeleteTarget(null) }
         );
     };
@@ -136,52 +113,35 @@ const SubjectList = () => {
     return (
         <ListView>
             <Breadcrumb />
-            <h1 className="page-title">Subjects</h1>
+            <h1 className="page-title">Departments</h1>
 
             <div className="intro-row">
-                <p className="text-muted-foreground">Manage academic subjects and their department assignments.</p>
+                <p className="text-muted-foreground">Manage academic departments and their associated subjects.</p>
 
                 <div className="action-row">
                     <div className="search-field">
                         <Search className="search-icon" />
                         <input
                             type="text"
-                            placeholder="Search subjects..."
+                            placeholder="Search departments..."
                             className="pl-10 w-full border border-border rounded-md p-1 bg-background"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                            <SelectTrigger className="w-48">
-                                <SelectValue placeholder={deptLoading ? 'Loading...' : 'Filter by department'} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Departments</SelectItem>
-                                {departments.map((dept) => (
-                                    <SelectItem value={dept.name} key={dept.id}>
-                                        <span className="font-mono text-xs text-muted-foreground mr-2">{dept.code}</span>
-                                        {dept.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <CreateButton />
-                    </div>
+                    <CreateButton resource="departments" />
                 </div>
             </div>
 
-            <DataTable table={subjectTable} />
+            <DataTable table={table} />
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Subject</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Department</AlertDialogTitle>
                         <AlertDialogDescription>
                             Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
-                            Subjects with associated classes cannot be deleted — remove the classes first.
+                            This action cannot be undone. Departments with subjects cannot be deleted.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -199,4 +159,4 @@ const SubjectList = () => {
     );
 };
 
-export default SubjectList;
+export default DepartmentList;
