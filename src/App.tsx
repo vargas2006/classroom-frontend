@@ -1,9 +1,6 @@
-import {
-  Refine,
-} from "@refinedev/core";
+import { Refine } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
-
 import { BrowserRouter, Route, Routes, Outlet } from "react-router";
 import routerProvider, {
   UnsavedChangesNotifier,
@@ -16,12 +13,35 @@ import { Toaster } from "./components/refine-ui/notification/toaster";
 import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import "./App.css";
 import Dashboard from "./pages/dashboard";
-import {BookOpen, GraduationCap, Home} from 'lucide-react'
+import { BookOpen, GraduationCap, Users, Building2, LayoutDashboard } from 'lucide-react';
+
+// Users
+import UserList from "./pages/users/list";
+import UserShow from "./pages/users/show";
+import UserEdit from "./pages/users/edit";
+import UserCreate from "./pages/users/create";
+
+// Departments
+import DepartmentList from "./pages/departments/list";
+import DepartmentCreate from "./pages/departments/create";
+import DepartmentEdit from "./pages/departments/edit";
+
+// Subjects
 import SubjectList from "./pages/subjects/list";
 import SubjectCreate from "./pages/subjects/create";
+import SubjectEdit from "./pages/subjects/edit";
+
+// Classes
 import ClassList from "./pages/classes/list";
 import ClassCreate from "./pages/classes/create";
 import ClassShow from "./pages/classes/show";
+import ClassEdit from "./pages/classes/edit";
+
+// App logo
+const AppLogo = () => (
+  <img src="/logo.png" alt="ClassroomMS" className="h-7 w-7 rounded object-cover" />
+);
+
 function App() {
   return (
     <BrowserRouter>
@@ -36,61 +56,101 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "WMF8Ar-q0ccy0-6p3ZGU",
+                title: {
+                  text: "Classroom MS",
+                  icon: <AppLogo />,
+                },
               }}
               resources={[
                 {
                   name: "dashboard",
-                  list: '/',
+                  list: "/",
                   meta: {
-                    label: 'Home',
-                    icon: <Home />
-                  }
+                    label: "Dashboard",
+                    icon: <LayoutDashboard />,
+                  },
                 },
                 {
-                  name: 'subjects',
-                  list: 'subjects',
-                  create: 'subjects/create',
-                  meta:{
-                    label: 'Subjects',
-                    icon: <BookOpen/>
-                
-                  }
-                  
+                  name: "users",
+                  list: "/users",
+                  create: "/users/create",
+                  show: "/users/show/:id",
+                  edit: "/users/edit/:id",
+                  meta: {
+                    label: "Users",
+                    icon: <Users />,
+                  },
                 },
                 {
-                  name: 'classes',
-                  list: 'classes',
-                  create: 'classes/create',
-                  show: '/classes/show/:id',
-                  meta:{
-                    label: 'Classes',
-                    icon: <GraduationCap/>
-                
-                  }
-                }
+                  name: "departments",
+                  list: "/departments",
+                  create: "/departments/create",
+                  edit: "/departments/edit/:id",
+                  meta: {
+                    label: "Departments",
+                    icon: <Building2 />,
+                  },
+                },
+                {
+                  name: "subjects",
+                  list: "/subjects",
+                  create: "/subjects/create",
+                  edit: "/subjects/edit/:id",
+                  meta: {
+                    label: "Subjects",
+                    icon: <BookOpen />,
+                  },
+                },
+                {
+                  name: "classes",
+                  list: "/classes",
+                  create: "/classes/create",
+                  edit: "/classes/edit/:id",
+                  show: "/classes/show/:id",
+                  meta: {
+                    label: "Classes",
+                    icon: <GraduationCap />,
+                  },
+                },
               ]}
             >
               <Routes>
                 <Route element={
                   <Layout>
-                    <Outlet/>
+                    <Outlet />
                   </Layout>
                 }>
-                  <Route path="/" element={<Dashboard/>} />
-                  <Route path="/subjects" element={<SubjectList/> }/>
-                  <Route path="/subjects/create" element={<SubjectCreate/>}/>
+                  <Route path="/" element={<Dashboard />} />
+
+                  <Route path="/users" element={<UserList />} />
+                  <Route path="/users/create" element={<UserCreate />} />
+                  <Route path="/users/show/:id" element={<UserShow />} />
+                  <Route path="/users/edit/:id" element={<UserEdit />} />
+
+                  <Route path="/departments" element={<DepartmentList />} />
+                  <Route path="/departments/create" element={<DepartmentCreate />} />
+                  <Route path="/departments/edit/:id" element={<DepartmentEdit />} />
+
+                  <Route path="/subjects" element={<SubjectList />} />
+                  <Route path="/subjects/create" element={<SubjectCreate />} />
+                  <Route path="/subjects/edit/:id" element={<SubjectEdit />} />
 
                   <Route path="/classes">
-                    <Route index element={<ClassList/> }/>
-                    <Route path="create" element={<ClassCreate/>}/>
-                    <Route path="show/:id" element={<ClassShow/>}/>
+                    <Route index element={<ClassList />} />
+                    <Route path="create" element={<ClassCreate />} />
+                    <Route path="edit/:id" element={<ClassEdit />} />
+                    <Route path="show/:id" element={<ClassShow />} />
                   </Route>
                 </Route>
               </Routes>
               <Toaster />
               <RefineKbar />
               <UnsavedChangesNotifier />
-              <DocumentTitleHandler />
+              <DocumentTitleHandler handler={({ resource }) =>
+                resource?.name
+                  ? `${resource.meta?.label ?? resource.name} | Classroom MS`
+                  : "Classroom MS"
+              } />
             </Refine>
             <DevtoolsPanel />
           </DevtoolsProvider>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ListView } from '@/components/refine-ui/views/list-view';
 import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
-import { Search } from 'lucide-react';
+import { Search, Pencil, Trash2 } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -12,16 +12,24 @@ import {
 import { CreateButton } from '@/components/refine-ui/buttons/create';
 import { DataTable } from '@/components/refine-ui/data-table/data-table';
 import { useTable } from '@refinedev/react-table';
-import { useList } from '@refinedev/core';
+import { useList, useDelete, useNavigation } from '@refinedev/core';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ClassDetails, Subject, User } from '@/types';
 import { ShowButton } from '@/components/refine-ui/buttons/show';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const ClassList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSubject, setSelectedSubject] = useState('all');
     const [selectedTeacher, setSelectedTeacher] = useState('all');
+    const [deleteTarget, setDeleteTarget] = useState<ClassDetails | null>(null);
+    const { edit } = useNavigation();
+    const { mutate: deleteOne } = useDelete();
 
     // ── Filter arrays passed to useTable (memoized for reference stability) ──
     const permanentFilters = useMemo(() => {
@@ -57,8 +65,8 @@ const ClassList = () => {
         queryOptions: { retry: 1, refetchOnWindowFocus: false },
     });
 
-    const subjects = subjectsQuery.result?.data ?? [];
-    const teachers = teachersQuery.result?.data ?? [];
+    const subjects = subjectsQuery.query.data?.data ?? [];
+    const teachers = teachersQuery.query.data?.data ?? [];
 
     // ── Table Columns (in specified order) ─────────────────────────────
     // 1) Banner -> bannerUrl
@@ -144,13 +152,28 @@ const ClassList = () => {
                     ),
                 },
                 {
-                    id: 'details',
-                    size: 140,
-                    header: () => <p className="column-title">Details</p>,
-                    cell: ({row}) => <ShowButton resource="classes" recordItemId={row.original.id} variant="outline" size="sm">View</ShowButton>
-                }
+                    id: 'actions',
+                    size: 170,
+                    header: () => <p className="column-title">Actions</p>,
+                    cell: ({ row }) => (
+                        <div className="flex gap-1">
+                            <ShowButton resource="classes" recordItemId={row.original.id} variant="outline" size="sm">View</ShowButton>
+                            <Button variant="outline" size="sm" onClick={() => edit('classes', row.original.id)}>
+                                <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    ),
+                },
             ],
-            []
+            [edit]
         ),
         refineCoreProps: {
             resource: 'classes',
@@ -236,6 +259,33 @@ const ClassList = () => {
             </div>
 
             <DataTable table={classTable} />
+
+            <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Class</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+                            This will also remove all enrollments associated with this class.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                                if (!deleteTarget) return;
+                                deleteOne(
+                                    { resource: 'classes', id: deleteTarget.id },
+                                    { onSettled: () => setDeleteTarget(null) }
+                                );
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </ListView>
     );
 };

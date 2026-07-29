@@ -7,140 +7,92 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/refine-ui/theme/theme-toggle";
 import { UserAvatar } from "@/components/refine-ui/layout/user-avatar";
-import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
-import { LogOutIcon } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
+import { LogOutIcon, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ── Single Header (works on all screen sizes) ─────────────────────────────
 export const Header = () => {
-  const { isMobile } = useSidebar();
-
-  return <>{isMobile ? <MobileHeader /> : <DesktopHeader />}</>;
-};
-
-function DesktopHeader() {
-  return (
-    <header
-      className={cn(
-        "sticky",
-        "top-0",
-        "flex",
-        "h-16",
-        "shrink-0",
-        "items-center",
-        "gap-4",
-        "border-b",
-        "border-border",
-        "bg-sidebar",
-        "pr-3",
-        "justify-end",
-        "z-40"
-      )}
-    >
-      <ThemeToggle />
-      <UserDropdown />
-    </header>
-  );
-}
-
-function MobileHeader() {
-  const { open, isMobile } = useSidebar();
-
+  const { toggleSidebar, open, isMobile } = useSidebar();
   const { title } = useRefineOptions();
 
   return (
     <header
       className={cn(
-        "sticky",
-        "top-0",
-        "flex",
-        "h-12",
-        "shrink-0",
-        "items-center",
-        "gap-2",
-        "border-b",
-        "border-border",
-        "bg-sidebar",
-        "pr-3",
-        "justify-between",
-        "z-40"
+        "sticky top-0 z-40",
+        "flex shrink-0 items-center gap-2 sm:gap-3",
+        "border-b border-border bg-sidebar",
+        "h-14 sm:h-16",
+        "px-2 sm:px-4",
+        "transition-all duration-200"
       )}
     >
-      <SidebarTrigger
-        className={cn("text-muted-foreground", "rotate-180", "ml-1", {
-          "opacity-0": open,
-          "opacity-100": !open || isMobile,
-          "pointer-events-auto": !open || isMobile,
-          "pointer-events-none": open && !isMobile,
-        })}
-      />
-
-      <div
+      {/* ── Sidebar toggle — ONE button, always visible ── */}
+      <button
+        onClick={toggleSidebar}
+        aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
         className={cn(
-          "whitespace-nowrap",
-          "flex",
-          "flex-row",
-          "h-full",
-          "items-center",
-          "justify-start",
-          "gap-2",
-          "transition-discrete",
-          "duration-200",
-          {
-            "pl-3": !open,
-            "pl-5": open,
-          }
+          "flex-shrink-0",
+          "flex items-center justify-center",
+          "h-8 w-8 rounded-md",
+          "text-muted-foreground hover:text-foreground hover:bg-accent",
+          "transition-colors duration-200",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         )}
       >
-        <div>{title.icon}</div>
-        <h2
+        <PanelLeftOpen
           className={cn(
-            "text-sm",
-            "font-bold",
-            "transition-opacity",
-            "duration-200",
-            {
-              "opacity-0": !open,
-              "opacity-100": open,
-            }
+            "h-4 w-4 transition-transform duration-300",
+            (open && !isMobile) && "rotate-180"
           )}
-        >
-          {title.text}
-        </h2>
-      </div>
+        />
+      </button>
 
-      <ThemeToggle className={cn("h-8", "w-8")} />
+      {/* ── App brand — shown in header only on mobile (sidebar hidden) or always on mobile ── */}
+      {isMobile && (
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex-shrink-0">{title.icon}</div>
+          <span className="text-sm font-bold truncate">{title.text}</span>
+        </div>
+      )}
+
+      {/* ── Desktop spacer ── */}
+      {!isMobile && <div className="flex-1" />}
+
+      {/* ── Right side actions ── */}
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <ThemeToggle />
+        <UserDropdown />
+      </div>
     </header>
   );
-}
+};
 
+// ── User dropdown ─────────────────────────────────────────────────────────
 const UserDropdown = () => {
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
-
   const authProvider = useActiveAuthProvider();
 
-  if (!authProvider?.getIdentity) {
-    return null;
-  }
+  if (!authProvider?.getIdentity) return null;
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <UserAvatar />
+      <DropdownMenuTrigger asChild>
+        <button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full">
+          <UserAvatar />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => {
-            logout();
-          }}
+          onClick={() => logout()}
+          className="cursor-pointer"
         >
-          <LogOutIcon
-            className={cn("text-destructive", "hover:text-destructive")}
-          />
-          <span className={cn("text-destructive", "hover:text-destructive")}>
+          <LogOutIcon className="text-destructive" />
+          <span className="text-destructive">
             {isLoggingOut ? "Logging out..." : "Logout"}
           </span>
         </DropdownMenuItem>
@@ -150,5 +102,3 @@ const UserDropdown = () => {
 };
 
 Header.displayName = "Header";
-MobileHeader.displayName = "MobileHeader";
-DesktopHeader.displayName = "DesktopHeader";
