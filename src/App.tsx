@@ -1,4 +1,4 @@
-import { Refine } from "@refinedev/core";
+import { Refine, Authenticated } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import { BrowserRouter, Route, Routes, Outlet } from "react-router";
@@ -7,13 +7,14 @@ import routerProvider, {
   DocumentTitleHandler,
 } from "@refinedev/react-router";
 import { dataProvider } from "./providers/data";
+import { authProvider } from "./providers/auth";
 import { Layout } from "./components/refine-ui/layout/layout";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
 import { Toaster } from "./components/refine-ui/notification/toaster";
 import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import "./App.css";
 import Dashboard from "./pages/dashboard";
-import { BookOpen, GraduationCap, Users, Building2, LayoutDashboard } from 'lucide-react';
+import { BookOpen, GraduationCap, Users, Building2, LayoutDashboard, Settings } from 'lucide-react';
 
 // Users
 import UserList from "./pages/users/list";
@@ -37,6 +38,12 @@ import ClassCreate from "./pages/classes/create";
 import ClassShow from "./pages/classes/show";
 import ClassEdit from "./pages/classes/edit";
 
+// Settings
+import SettingsPage from "./pages/settings";
+
+// Auth
+import LoginPage from "./pages/login";
+
 // App logo
 const AppLogo = () => (
   <img src="/logo.png" alt="ClassroomMS" className="h-7 w-7 rounded object-cover" />
@@ -50,6 +57,7 @@ function App() {
           <DevtoolsProvider>
             <Refine
               dataProvider={dataProvider}
+              authProvider={authProvider}
               notificationProvider={useNotificationProvider()}
               routerProvider={routerProvider}
               options={{
@@ -112,14 +120,30 @@ function App() {
                     icon: <GraduationCap />,
                   },
                 },
+                {
+                  name: "settings",
+                  list: "/settings",
+                  meta: {
+                    label: "Settings",
+                    icon: <Settings />,
+                  },
+                },
               ]}
             >
               <Routes>
-                <Route element={
-                  <Layout>
-                    <Outlet />
-                  </Layout>
-                }>
+                {/* ── Public: Login ── */}
+                <Route path="/login" element={<LoginPage />} />
+
+                {/* ── Protected: all other pages require auth ── */}
+                <Route
+                  element={
+                    <Authenticated key="authenticated-routes" redirectOnFail="/login">
+                      <Layout>
+                        <Outlet />
+                      </Layout>
+                    </Authenticated>
+                  }
+                >
                   <Route path="/" element={<Dashboard />} />
 
                   <Route path="/users" element={<UserList />} />
@@ -141,8 +165,11 @@ function App() {
                     <Route path="edit/:id" element={<ClassEdit />} />
                     <Route path="show/:id" element={<ClassShow />} />
                   </Route>
+
+                  <Route path="/settings" element={<SettingsPage />} />
                 </Route>
               </Routes>
+
               <Toaster />
               <RefineKbar />
               <UnsavedChangesNotifier />

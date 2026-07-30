@@ -8,12 +8,15 @@ import {
   DropdownMenuItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/refine-ui/theme/theme-toggle";
 import { UserAvatar } from "@/components/refine-ui/layout/user-avatar";
 import { useSidebar } from "@/components/ui/sidebar";
-import { LogOutIcon, PanelLeftOpen } from "lucide-react";
+import { LogOutIcon, PanelLeftOpen, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router";
+
 
 // ── Single Header (works on all screen sizes) ─────────────────────────────
 export const Header = () => {
@@ -87,6 +90,13 @@ const UserDropdown = () => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link to="/settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => logout()}
           className="cursor-pointer"
