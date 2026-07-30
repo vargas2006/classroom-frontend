@@ -9,6 +9,7 @@
 
 import { AuthProvider } from '@refinedev/core';
 import { BACKEND_BASE_URL } from '@/constants';
+import { resetAccessControlCache } from './access-control';
 
 // Strip /api suffix to reach the auth root (e.g. http://localhost:8000)
 const AUTH_BASE = BACKEND_BASE_URL.replace(/\/api\/?$/, '');
@@ -35,6 +36,7 @@ const authProvider: AuthProvider = {
                 };
             }
 
+            resetAccessControlCache();
             return { success: true, redirectTo: '/' };
         } catch {
             return {
@@ -54,6 +56,7 @@ const authProvider: AuthProvider = {
         } catch {
             // Ignore network errors on logout
         }
+        resetAccessControlCache();
         return { success: true, redirectTo: '/login' };
     },
 

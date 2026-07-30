@@ -10,7 +10,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDelete, useNavigation } from '@refinedev/core';
+import { useDelete, useNavigation, CanAccess } from '@refinedev/core';
+import { AccessDenied } from '@/components/refine-ui/layout/access-denied';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -112,17 +113,21 @@ const UserList = () => {
                         <Button variant="outline" size="sm" onClick={() => show('users', row.original.id)}>
                             <Eye className="h-3 w-3" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => edit('users', row.original.id)}>
-                            <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <CanAccess resource="users" action="edit">
+                            <Button variant="outline" size="sm" onClick={() => edit('users', row.original.id)}>
+                                <Pencil className="h-3 w-3" />
+                            </Button>
+                        </CanAccess>
+                        <CanAccess resource="users" action="delete">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </CanAccess>
                     </div>
                 ),
             },
@@ -145,64 +150,66 @@ const UserList = () => {
     };
 
     return (
-        <ListView>
-            <Breadcrumb />
-            <h1 className="page-title">Users</h1>
+        <CanAccess resource="users" action="list" fallback={<AccessDenied />}>
+            <ListView>
+                <Breadcrumb />
+                <h1 className="page-title">Users</h1>
 
-            <div className="intro-row">
-                <p className="text-muted-foreground">Manage all admin, teacher, and student accounts.</p>
+                <div className="intro-row">
+                    <p className="text-muted-foreground">Manage all admin, teacher, and student accounts.</p>
 
-                <div className="action-row">
-                    <div className="search-field">
-                        <Search className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Search by name or email..."
-                            className="pl-10 w-full border border-border rounded-md p-1 bg-background"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <Select value={selectedRole} onValueChange={setSelectedRole}>
-                            <SelectTrigger className="w-36">
-                                <SelectValue placeholder="Filter by role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Roles</SelectItem>
-                                <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-                                <SelectItem value={UserRole.TEACHER}>Teacher</SelectItem>
-                                <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <CreateButton resource="users" />
+                    <div className="action-row">
+                        <div className="search-field">
+                            <Search className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                className="pl-10 w-full border border-border rounded-md p-1 bg-background"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Select value={selectedRole} onValueChange={setSelectedRole}>
+                                <SelectTrigger className="w-36">
+                                    <SelectValue placeholder="Filter by role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                                    <SelectItem value={UserRole.TEACHER}>Teacher</SelectItem>
+                                    <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <CreateButton resource="users" />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <DataTable table={table} />
+                <DataTable table={table} />
 
-            <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete User</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
-                            Teachers assigned to active classes cannot be deleted — reassign those classes first.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                        >
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </ListView>
+                <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete User</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+                                Teachers assigned to active classes cannot be deleted — reassign those classes first.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={handleDelete}
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </ListView>
+        </CanAccess>
     );
 };
 

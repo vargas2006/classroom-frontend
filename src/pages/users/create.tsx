@@ -2,7 +2,8 @@ import React from 'react';
 import { CreateView } from '@/components/refine-ui/views/create-view';
 import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { useBack } from '@refinedev/core';
+import { useBack, CanAccess } from '@refinedev/core';
+import { AccessDenied } from '@/components/refine-ui/layout/access-denied';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,14 +50,15 @@ const UserCreate = () => {
     };
 
     return (
-        <CreateView className="class-view">
-            <Breadcrumb />
-            <h1 className="page-title">Create User</h1>
-            <div className="intro-row">
-                <p className="text-muted-foreground">Add a new user with name, email, role, and a login password.</p>
-                <Button variant="outline" onClick={() => back()}>Go Back</Button>
-            </div>
-            <Separator className="my-4" />
+        <CanAccess resource="users" action="create" fallback={<AccessDenied />}>
+            <CreateView className="class-view">
+                <Breadcrumb />
+                <h1 className="page-title">Create User</h1>
+                <div className="intro-row">
+                    <p className="text-muted-foreground">Add a new user with name, email, role, and a login password.</p>
+                    <Button variant="outline" onClick={() => back()}>Go Back</Button>
+                </div>
+                <Separator className="my-4" />
 
             <div className="my-4 flex items-center">
                 <Card className="class-form-card">
@@ -173,6 +175,7 @@ const UserCreate = () => {
                 </Card>
             </div>
         </CreateView>
+    </CanAccess>
     );
 };
 

@@ -8,6 +8,7 @@ import routerProvider, {
 } from "@refinedev/react-router";
 import { dataProvider } from "./providers/data";
 import { authProvider } from "./providers/auth";
+import { accessControlProvider } from "./providers/access-control";
 import { Layout } from "./components/refine-ui/layout/layout";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
 import { Toaster } from "./components/refine-ui/notification/toaster";
@@ -58,6 +59,7 @@ function App() {
             <Refine
               dataProvider={dataProvider}
               authProvider={authProvider}
+              accessControlProvider={accessControlProvider}
               notificationProvider={useNotificationProvider()}
               routerProvider={routerProvider}
               options={{

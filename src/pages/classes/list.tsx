@@ -12,7 +12,7 @@ import {
 import { CreateButton } from '@/components/refine-ui/buttons/create';
 import { DataTable } from '@/components/refine-ui/data-table/data-table';
 import { useTable } from '@refinedev/react-table';
-import { useList, useDelete, useNavigation } from '@refinedev/core';
+import { useList, useDelete, useNavigation, CanAccess } from '@refinedev/core';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -158,17 +158,21 @@ const ClassList = () => {
                     cell: ({ row }) => (
                         <div className="flex gap-1">
                             <ShowButton resource="classes" recordItemId={row.original.id} variant="outline" size="sm">View</ShowButton>
-                            <Button variant="outline" size="sm" onClick={() => edit('classes', row.original.id)}>
-                                <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                onClick={() => setDeleteTarget(row.original)}
-                            >
-                                <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <CanAccess resource="classes" action="edit">
+                                <Button variant="outline" size="sm" onClick={() => edit('classes', row.original.id)}>
+                                    <Pencil className="h-3 w-3" />
+                                </Button>
+                            </CanAccess>
+                            <CanAccess resource="classes" action="delete">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    onClick={() => setDeleteTarget(row.original)}
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </Button>
+                            </CanAccess>
                         </div>
                     ),
                 },

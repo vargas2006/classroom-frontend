@@ -9,7 +9,7 @@ import { Department } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useDelete, useNavigation } from '@refinedev/core';
+import { useDelete, useNavigation, CanAccess } from '@refinedev/core';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -73,22 +73,26 @@ const DepartmentList = () => {
                 header: () => <p className="column-title">Actions</p>,
                 cell: ({ row }) => (
                     <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => edit('departments', row.original.id)}
-                        >
-                            <Pencil className="h-3 w-3 mr-1" />
-                            Edit
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <CanAccess resource="departments" action="edit">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => edit('departments', row.original.id)}
+                            >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Edit
+                            </Button>
+                        </CanAccess>
+                        <CanAccess resource="departments" action="delete">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </CanAccess>
                     </div>
                 ),
             },

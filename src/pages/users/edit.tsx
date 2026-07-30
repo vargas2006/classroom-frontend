@@ -2,7 +2,7 @@ import React from 'react';
 import { CreateView } from '@/components/refine-ui/views/create-view';
 import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { useBack } from '@refinedev/core';
+import { useBack, useGetIdentity } from '@refinedev/core';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,9 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Shield, BookOpen, GraduationCap } from 'lucide-react';
 import UploadWidget from '@/components/upload-widget';
+import { User } from '@/types';
 
 const UserEdit = () => {
     const back = useBack();
+    const { data: identity } = useGetIdentity<User>();
+    const isAdmin = identity?.role === 'admin';
 
     const form = useForm({
         resolver: zodResolver(userSchema) as any,
@@ -115,9 +118,9 @@ const UserEdit = () => {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Role <span className="text-destructive">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                                                <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={!isAdmin}>
                                                     <FormControl>
-                                                        <SelectTrigger>
+                                                        <SelectTrigger className={!isAdmin ? "bg-muted cursor-not-allowed" : ""}>
                                                             <SelectValue placeholder="Select a role" />
                                                         </SelectTrigger>
                                                     </FormControl>
@@ -133,6 +136,11 @@ const UserEdit = () => {
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                {!isAdmin && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Only Administrators can change user roles.
+                                                    </p>
+                                                )}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
