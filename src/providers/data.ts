@@ -103,6 +103,7 @@ const options: CreateDataProviderOptions = {
 
   update: {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
+    getRequestMethod: () => 'PATCH',
     buildBodyParams: async ({ variables }) => variables,
     mapResponse: async (response) => {
       if (!response.ok) throw await buildHttpError(response);
