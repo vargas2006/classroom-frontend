@@ -19,7 +19,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
-    const { mutate: login, isLoading } = useLogin<LoginValues>();
+    const { mutate: login, isLoading } = useLogin<LoginValues>() as any;
     const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<LoginValues>({

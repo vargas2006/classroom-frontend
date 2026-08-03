@@ -83,7 +83,7 @@ const { query: subjectsQuery } = useList<Subject>({
     pagination: {
         pageSize: 100,
     },
-    queryOptions: { retry: 1, refetchOnWindowFocus: false },
+    queryOptions: { retry: 1, refetchOnWindowFocus: false, staleTime: 60000 },
 });
 
 const { query: teachersQuery } = useList<User>({
@@ -92,7 +92,7 @@ const { query: teachersQuery } = useList<User>({
     pagination: {
         pageSize: 100,
     },
-    queryOptions: { retry: 1, refetchOnWindowFocus: false },
+    queryOptions: { retry: 1, refetchOnWindowFocus: false, staleTime: 60000 },
 });
 
 const subjects = subjectsQuery?.data?.data || [];

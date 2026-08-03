@@ -5,6 +5,7 @@ import {
   useMenu,
   useLink,
   useRefineOptions,
+  useGetIdentity,
   type TreeMenuItem,
 } from "@refinedev/core";
 import {
@@ -32,6 +33,13 @@ import { cn } from "@/lib/utils";
 export function Sidebar() {
   const { open } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
+  const { data: identity } = useGetIdentity<{ role: string }>();
+  const isStudent = identity?.role === 'student';
+
+  const visibleMenuItems = menuItems.filter((item: TreeMenuItem) => {
+    if (isStudent && item.name === 'users') return false;
+    return true;
+  });
 
   return (
     <ShadcnSidebar collapsible="icon" className="border-none">
@@ -45,7 +53,7 @@ export function Sidebar() {
           open ? "px-3" : "px-1"
         )}
       >
-        {menuItems.map((item: TreeMenuItem) => (
+        {visibleMenuItems.map((item: TreeMenuItem) => (
           <SidebarItem
             key={item.key || item.name}
             item={item}

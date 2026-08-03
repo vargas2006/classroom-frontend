@@ -9,7 +9,7 @@ import { Department } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useDelete, useNavigation } from '@refinedev/core';
+import { useDelete, useNavigation, useGetIdentity } from '@refinedev/core';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,6 +26,8 @@ const DepartmentList = () => {
     const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
     const { edit } = useNavigation();
     const { mutate: deleteOne } = useDelete();
+    const { data: identity } = useGetIdentity<{ role: string }>();
+    const isAdmin = identity?.role === 'admin';
 
     const permanentFilters = useMemo(() => {
         const filters = [];
@@ -36,68 +38,75 @@ const DepartmentList = () => {
     }, [searchQuery]);
 
     const table = useTable<Department>({
-        columns: useMemo<ColumnDef<Department>[]>(() => [
-            {
-                id: 'code',
-                accessorKey: 'code',
-                size: 100,
-                header: () => <p className="column-title ml-2">Code</p>,
-                cell: ({ getValue }) => <Badge variant="outline" className="font-mono">{getValue<string>()}</Badge>,
-            },
-            {
-                id: 'name',
-                accessorKey: 'name',
-                size: 220,
-                header: () => <p className="column-title">Department Name</p>,
-                cell: ({ getValue }) => (
-                    <span className="flex items-center gap-2 font-medium text-foreground">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        {getValue<string>()}
-                    </span>
-                ),
-            },
-            {
-                id: 'description',
-                accessorKey: 'description',
-                size: 350,
-                header: () => <p className="column-title">Description</p>,
-                cell: ({ getValue }) => (
-                    <span className="text-sm text-muted-foreground line-clamp-1">
-                        {getValue<string>() || '—'}
-                    </span>
-                ),
-            },
-            {
-                id: 'actions',
-                size: 120,
-                header: () => <p className="column-title">Actions</p>,
-                cell: ({ row }) => (
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => edit('departments', row.original.id)}
-                        >
-                            <Pencil className="h-3 w-3 mr-1" />
-                            Edit
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
-                    </div>
-                ),
-            },
-        ], [edit]),
+        columns: useMemo<ColumnDef<Department>[]>(() => {
+            const cols: ColumnDef<Department>[] = [
+                {
+                    id: 'code',
+                    accessorKey: 'code',
+                    size: 100,
+                    header: () => <p className="column-title ml-2">Code</p>,
+                    cell: ({ getValue }) => <Badge variant="outline" className="font-mono">{getValue<string>()}</Badge>,
+                },
+                {
+                    id: 'name',
+                    accessorKey: 'name',
+                    size: 220,
+                    header: () => <p className="column-title">Department Name</p>,
+                    cell: ({ getValue }) => (
+                        <span className="flex items-center gap-2 font-medium text-foreground">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            {getValue<string>()}
+                        </span>
+                    ),
+                },
+                {
+                    id: 'description',
+                    accessorKey: 'description',
+                    size: 350,
+                    header: () => <p className="column-title">Description</p>,
+                    cell: ({ getValue }) => (
+                        <span className="text-sm text-muted-foreground line-clamp-1">
+                            {getValue<string>() || '—'}
+                        </span>
+                    ),
+                },
+            ];
+
+            if (isAdmin) {
+                cols.push({
+                    id: 'actions',
+                    size: 120,
+                    header: () => <p className="column-title">Actions</p>,
+                    cell: ({ row }) => (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => edit('departments', row.original.id)}
+                            >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Edit
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    ),
+                });
+            }
+
+            return cols;
+        }, [edit, isAdmin]),
         refineCoreProps: {
             resource: 'departments',
             pagination: { pageSize: 10, mode: 'server' },
             filters: { permanent: permanentFilters },
-            queryOptions: { retry: 1, refetchOnWindowFocus: false },
+            queryOptions: { retry: false, refetchOnWindowFocus: false, staleTime: 10000 },
             sorters: { initial: [{ field: 'id', order: 'desc' }] },
         },
     });
@@ -129,7 +138,7 @@ const DepartmentList = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <CreateButton resource="departments" />
+                    {isAdmin && <CreateButton resource="departments" />}
                 </div>
             </div>
 

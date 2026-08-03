@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CreateButton } from '@/components/refine-ui/buttons/create';
 import { DataTable } from '@/components/refine-ui/data-table/data-table';
 import { useTable } from '@refinedev/react-table';
-import { useList, useDelete, useNavigation } from '@refinedev/core';
+import { useList, useDelete, useNavigation, useGetIdentity } from '@refinedev/core';
 import { Subject, Department } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,12 +22,14 @@ const SubjectList = () => {
     const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null);
     const { edit } = useNavigation();
     const { mutate: deleteOne } = useDelete();
+    const { data: identity } = useGetIdentity<{ role: string }>();
+    const isAdmin = identity?.role === 'admin';
 
     // Fetch departments for filter dropdown
     const deptQuery = useList<Department>({
         resource: 'departments',
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { retry: false, refetchOnWindowFocus: false, staleTime: 60000 },
     });
     const departments = deptQuery.query.data?.data ?? [];
     const deptLoading = deptQuery.query.isLoading;
@@ -52,75 +54,82 @@ const SubjectList = () => {
     }, [selectedDepartment, searchQuery]);
 
     const subjectTable = useTable<Subject>({
-        columns: useMemo<ColumnDef<Subject>[]>(() => [
-            {
-                id: 'code',
-                accessorKey: 'code',
-                size: 100,
-                header: () => <p className="column-title ml-2">Code</p>,
-                cell: ({ getValue }) => <Badge>{getValue<string>()}</Badge>,
-            },
-            {
-                id: 'name',
-                accessorKey: 'name',
-                size: 220,
-                header: () => <p className="column-title">Name</p>,
-                cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue<string>()}</span>,
-                filterFn: 'includesString',
-            },
-            {
-                id: 'department',
-                accessorKey: 'department',
-                size: 160,
-                header: () => <p className="column-title">Department</p>,
-                cell: ({ getValue }) => {
-                    const val = getValue<any>();
-                    const deptName = typeof val === 'object' ? val?.name : val;
-                    return <Badge variant="secondary">{deptName || '—'}</Badge>;
+        columns: useMemo<ColumnDef<Subject>[]>(() => {
+            const cols: ColumnDef<Subject>[] = [
+                {
+                    id: 'code',
+                    accessorKey: 'code',
+                    size: 100,
+                    header: () => <p className="column-title ml-2">Code</p>,
+                    cell: ({ getValue }) => <Badge>{getValue<string>()}</Badge>,
                 },
-            },
-            {
-                id: 'description',
-                accessorKey: 'description',
-                size: 280,
-                header: () => <p className="column-title">Description</p>,
-                cell: ({ getValue }) => (
-                    <span className="text-sm text-muted-foreground truncate line-clamp-1">
-                        {getValue<string>() || '—'}
-                    </span>
-                ),
-            },
-            {
-                id: 'actions',
-                size: 120,
-                header: () => <p className="column-title">Actions</p>,
-                cell: ({ row }) => (
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => edit('subjects', row.original.id)}
-                        >
-                            <Pencil className="h-3 w-3 mr-1" />
-                            Edit
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
-                    </div>
-                ),
-            },
-        ], [edit]),
+                {
+                    id: 'name',
+                    accessorKey: 'name',
+                    size: 220,
+                    header: () => <p className="column-title">Name</p>,
+                    cell: ({ getValue }) => <span className="font-medium text-foreground">{getValue<string>()}</span>,
+                    filterFn: 'includesString',
+                },
+                {
+                    id: 'department',
+                    accessorKey: 'department',
+                    size: 160,
+                    header: () => <p className="column-title">Department</p>,
+                    cell: ({ getValue }) => {
+                        const val = getValue<any>();
+                        const deptName = typeof val === 'object' ? val?.name : val;
+                        return <Badge variant="secondary">{deptName || '—'}</Badge>;
+                    },
+                },
+                {
+                    id: 'description',
+                    accessorKey: 'description',
+                    size: 280,
+                    header: () => <p className="column-title">Description</p>,
+                    cell: ({ getValue }) => (
+                        <span className="text-sm text-muted-foreground truncate line-clamp-1">
+                            {getValue<string>() || '—'}
+                        </span>
+                    ),
+                },
+            ];
+
+            if (isAdmin) {
+                cols.push({
+                    id: 'actions',
+                    size: 120,
+                    header: () => <p className="column-title">Actions</p>,
+                    cell: ({ row }) => (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => edit('subjects', row.original.id)}
+                            >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Edit
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => setDeleteTarget(row.original)}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    ),
+                });
+            }
+
+            return cols;
+        }, [edit, isAdmin]),
         refineCoreProps: {
             resource: 'subjects',
             pagination: { pageSize: 10, mode: 'server' },
             filters: { permanent: permanentFilters },
-            queryOptions: { retry: 1, refetchOnWindowFocus: false },
+            queryOptions: { retry: false, refetchOnWindowFocus: false, staleTime: 10000 },
             sorters: { initial: [{ field: 'id', order: 'desc' }] },
         },
     });
@@ -168,7 +177,7 @@ const SubjectList = () => {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <CreateButton />
+                        {isAdmin && <CreateButton resource="subjects" />}
                     </div>
                 </div>
             </div>

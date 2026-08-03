@@ -12,7 +12,7 @@ import {
 import { CreateButton } from '@/components/refine-ui/buttons/create';
 import { DataTable } from '@/components/refine-ui/data-table/data-table';
 import { useTable } from '@refinedev/react-table';
-import { useList, useDelete, useNavigation } from '@refinedev/core';
+import { useList, useDelete, useNavigation, useGetIdentity } from '@refinedev/core';
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,9 @@ const ClassList = () => {
     const [deleteTarget, setDeleteTarget] = useState<ClassDetails | null>(null);
     const { edit } = useNavigation();
     const { mutate: deleteOne } = useDelete();
+    const { data: identity } = useGetIdentity<{ role: string }>();
+    const canEdit = identity?.role === 'admin' || identity?.role === 'teacher';
+    const canDelete = identity?.role === 'admin';
 
     // ── Filter arrays passed to useTable (memoized for reference stability) ──
     const permanentFilters = useMemo(() => {
@@ -55,26 +58,19 @@ const ClassList = () => {
     const subjectsQuery = useList<Subject>({
         resource: 'subjects',
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { retry: false, refetchOnWindowFocus: false, staleTime: 60000 },
     });
 
     const teachersQuery = useList<User>({
         resource: 'users',
         filters: teacherRoleFilter,
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { enabled: canEdit, retry: false, refetchOnWindowFocus: false, staleTime: 60000 },
     });
 
     const subjects = subjectsQuery.query.data?.data ?? [];
     const teachers = teachersQuery.query.data?.data ?? [];
 
-    // ── Table Columns (in specified order) ─────────────────────────────
-    // 1) Banner -> bannerUrl
-    // 2) Class Name -> name
-    // 3) Status -> status (Badge: active / inactive)
-    // 4) Subject -> subject.name
-    // 5) Teacher -> teacher.name
-    // 6) Capacity -> capacity
     const classTable = useTable<ClassDetails>({
         columns: useMemo<ColumnDef<ClassDetails>[]>(
             () => [
@@ -158,22 +154,26 @@ const ClassList = () => {
                     cell: ({ row }) => (
                         <div className="flex gap-1">
                             <ShowButton resource="classes" recordItemId={row.original.id} variant="outline" size="sm">View</ShowButton>
-                            <Button variant="outline" size="sm" onClick={() => edit('classes', row.original.id)}>
-                                <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                onClick={() => setDeleteTarget(row.original)}
-                            >
-                                <Trash2 className="h-3 w-3" />
-                            </Button>
+                            {canEdit && (
+                                <Button variant="outline" size="sm" onClick={() => edit('classes', row.original.id)}>
+                                    <Pencil className="h-3 w-3" />
+                                </Button>
+                            )}
+                            {canDelete && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    onClick={() => setDeleteTarget(row.original)}
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </Button>
+                            )}
                         </div>
                     ),
                 },
             ],
-            [edit]
+            [edit, canEdit, canDelete]
         ),
         refineCoreProps: {
             resource: 'classes',
@@ -185,8 +185,9 @@ const ClassList = () => {
                 permanent: permanentFilters,
             },
             queryOptions: {
-                retry: 1,
+                retry: false,
                 refetchOnWindowFocus: false,
+                staleTime: 10000,
             },
             sorters: {
                 initial: [{ field: 'id', order: 'desc' }],
@@ -253,7 +254,7 @@ const ClassList = () => {
                             </SelectContent>
                         </Select>
 
-                        <CreateButton resource="classes" />
+                        {canEdit && <CreateButton resource="classes" />}
                     </div>
                 </div>
             </div>

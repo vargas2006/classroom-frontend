@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ListView } from '@/components/refine-ui/views/list-view';
 import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
 import { Search, Shield, BookOpen, GraduationCap, Trash2, Pencil, Eye } from 'lucide-react';
@@ -10,7 +10,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDelete, useNavigation } from '@refinedev/core';
+import { useDelete, useNavigation, useGetIdentity } from '@refinedev/core';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -30,21 +30,30 @@ const RoleIcon = ({ role }: { role: string }) => {
 
 const UserList = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedRole, setSelectedRole] = useState('all');
     const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
     const { edit, show } = useNavigation();
     const { mutate: deleteOne } = useDelete();
+    const { data: identity, isLoading: identityLoading } = useGetIdentity<{ role: string }>();
+    const isAdmin = identity?.role === 'admin';
+
+    // Debounce search input by 400ms to avoid spamming the API on every keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const permanentFilters = useMemo(() => {
         const filters = [];
-        if (searchQuery) {
-            filters.push({ field: 'name', operator: 'contains' as const, value: searchQuery });
+        if (debouncedSearch) {
+            filters.push({ field: 'name', operator: 'contains' as const, value: debouncedSearch });
         }
         if (selectedRole !== 'all') {
             filters.push({ field: 'role', operator: 'eq' as const, value: selectedRole });
         }
         return filters;
-    }, [searchQuery, selectedRole]);
+    }, [debouncedSearch, selectedRole]);
 
     const table = useTable<User>({
         columns: useMemo<ColumnDef<User>[]>(() => [
@@ -112,26 +121,36 @@ const UserList = () => {
                         <Button variant="outline" size="sm" onClick={() => show('users', row.original.id)}>
                             <Eye className="h-3 w-3" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => edit('users', row.original.id)}>
-                            <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeleteTarget(row.original)}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {isAdmin && (
+                            <>
+                                <Button variant="outline" size="sm" onClick={() => edit('users', row.original.id)}>
+                                    <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    onClick={() => setDeleteTarget(row.original)}
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </Button>
+                            </>
+                        )}
                     </div>
                 ),
             },
-        ], [edit, show]),
+        ], [edit, show, isAdmin]),
         refineCoreProps: {
             resource: 'users',
             pagination: { pageSize: 10, mode: 'server' },
             filters: { permanent: permanentFilters },
-            queryOptions: { retry: 1, refetchOnWindowFocus: false },
+            queryOptions: {
+                // Only fetch after identity has resolved — prevents the 401 burst on page load
+                enabled: !identityLoading && (identity?.role === 'admin' || identity?.role === 'teacher'),
+                retry: false,
+                refetchOnWindowFocus: false,
+                staleTime: 10000,
+            },
             sorters: { initial: [{ field: 'id', order: 'desc' }] },
         },
     });
@@ -175,7 +194,7 @@ const UserList = () => {
                                 <SelectItem value={UserRole.STUDENT}>Student</SelectItem>
                             </SelectContent>
                         </Select>
-                        <CreateButton resource="users" />
+                        {isAdmin && <CreateButton resource="users" />}
                     </div>
                 </div>
             </div>
