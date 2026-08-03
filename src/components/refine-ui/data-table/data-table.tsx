@@ -4,7 +4,6 @@ import type { HttpError, BaseRecord } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import type { Column } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
-import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -15,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DataTablePagination } from "@/components/refine-ui/data-table/data-table-pagination";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ export function DataTable<TData extends BaseRecord>({
 
   const columns = getAllColumns();
   const leafColumns = table.reactTable.getAllLeafColumns();
-  const isLoading = tableQuery.isLoading;
+  const isLoading = tableQuery.isLoading || tableQuery.isFetching || tableQuery.status === "pending";
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
@@ -120,44 +120,47 @@ export function DataTable<TData extends BaseRecord>({
                     <TableRow
                       key={`skeleton-row-${rowIndex}`}
                       aria-hidden="true"
+                      className="hover:bg-transparent"
                     >
-                      {leafColumns.map((column) => (
-                        <TableCell
-                          key={`skeleton-cell-${rowIndex}-${column.id}`}
-                          style={{
-                            ...getCommonStyles({
-                              column,
-                              isOverflowing: isOverflowing,
-                            }),
-                          }}
-                          className={cn("truncate")}
-                        >
-                          <div className="h-8" />
-                        </TableCell>
-                      ))}
+                      {leafColumns.map((column, colIndex) => {
+                        // Vary width per cell so rows look organic, not uniform
+                        const widths = [70, 55, 85, 60, 75, 50, 80, 65];
+                        const w = widths[(rowIndex * leafColumns.length + colIndex) % widths.length];
+                        // Narrow columns (avatar / icon columns ≤ 70px) → circular skeleton
+                        const isCircle = (column.getSize() ?? 120) <= 70;
+                        return (
+                          <TableCell
+                            key={`skeleton-cell-${rowIndex}-${column.id}`}
+                            style={{
+                              ...getCommonStyles({
+                                column,
+                                isOverflowing: isOverflowing,
+                              }),
+                            }}
+                          >
+                            {isCircle ? (
+                              <Skeleton className="h-9 w-9 rounded-full" />
+                            ) : (
+                              <div className="flex flex-col gap-1.5">
+                                <Skeleton
+                                  className="h-4 rounded"
+                                  style={{ width: `${w}%` }}
+                                />
+                                {/* Second line for "name + email" style cells */}
+                                {(column.getSize() ?? 120) >= 160 && (
+                                  <Skeleton
+                                    className="h-3 rounded"
+                                    style={{ width: `${Math.max(30, w - 20)}%` }}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   )
                 )}
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className={cn("absolute", "inset-0", "pointer-events-none")}
-                  >
-                    <Loader2
-                      className={cn(
-                        "absolute",
-                        "top-1/2",
-                        "left-1/2",
-                        "animate-spin",
-                        "text-primary",
-                        "h-8",
-                        "w-8",
-                        "-translate-x-1/2",
-                        "-translate-y-1/2"
-                      )}
-                    />
-                  </TableCell>
-                </TableRow>
               </>
             ) : getRowModel().rows?.length ? (
               getRowModel().rows.map((row) => {

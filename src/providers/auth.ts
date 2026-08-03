@@ -78,8 +78,16 @@ const authProvider: AuthProvider = {
                 };
             }
 
-            // Warm the cache with fresh session after login
-            await fetchSession(true);
+            // Small delay to ensure the browser has saved the Set-Cookie header into the cookie jar
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            let session = await fetchSession(true);
+
+            // Retry once if browser cookie jar was slightly delayed
+            if (!session?.user) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                await fetchSession(true);
+            }
+
             return { success: true, redirectTo: '/' };
         } catch {
             return {
