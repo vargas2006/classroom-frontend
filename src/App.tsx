@@ -64,6 +64,18 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "WMF8Ar-q0ccy0-6p3ZGU",
+                reactQuery: {
+                  clientConfig: {
+                    defaultOptions: {
+                      queries: {
+                        staleTime: 1000 * 30, // 30 seconds fresh
+                        refetchOnWindowFocus: false,
+                        refetchOnReconnect: false,
+                        retry: false, // Do not auto-retry failed queries (prevents 401 refetch storms)
+                      },
+                    },
+                  },
+                },
                 title: {
                   text: "Classroom MS",
                   icon: <AppLogo />,

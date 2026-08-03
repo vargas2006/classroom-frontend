@@ -103,7 +103,7 @@ const options: CreateDataProviderOptions = {
 
   update: {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
-    getRequestMethod: () => 'PATCH',
+    getRequestMethod: () => 'patch',
     buildBodyParams: async ({ variables }) => variables,
     mapResponse: async (response) => {
       if (!response.ok) throw await buildHttpError(response);
@@ -134,6 +134,9 @@ const options: CreateDataProviderOptions = {
   }
 };
 
-const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options);
+const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options, {
+  // Send session cookie on every API request so the backend can authenticate the user
+  credentials: 'include',
+});
 
 export { dataProvider };

@@ -41,7 +41,7 @@ const ClassEdit = () => {
     const subjectsQuery = useList<Subject>({
         resource: 'subjects',
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { retry: 1, refetchOnWindowFocus: false, staleTime: 60000 },
     });
     const subjects = subjectsQuery.query.data?.data ?? [];
     const subjectsLoading = subjectsQuery.query.isLoading;
@@ -51,7 +51,7 @@ const ClassEdit = () => {
         resource: 'users',
         filters: teacherFilters,
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { retry: 1, refetchOnWindowFocus: false, staleTime: 60000 },
     });
     const teachers = teachersQuery.query.data?.data ?? [];
     const teachersLoading = teachersQuery.query.isLoading;
@@ -60,7 +60,7 @@ const ClassEdit = () => {
     const deptQuery = useList<Department>({
         resource: 'departments',
         pagination: { pageSize: 200 },
-        queryOptions: { retry: 1, refetchOnWindowFocus: false },
+        queryOptions: { retry: 1, refetchOnWindowFocus: false, staleTime: 60000 },
     });
     const departments = deptQuery.query.data?.data ?? [];
 
