@@ -4,7 +4,7 @@ import { DashboardStats } from '@/types';
 import {
     Users, GraduationCap, BookOpen, Building2,
     TrendingUp, CheckCircle2, Clock, AlertTriangle,
-    Activity, Loader2, RefreshCcw,
+    Activity, RefreshCcw,
 } from 'lucide-react';
 import {
     BarChart, Bar, PieChart, Pie, Cell,
@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ── Colour palettes ────────────────────────────────────────────────────────
 const DEPT_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6'];
@@ -117,16 +118,154 @@ const Dashboard = () => {
 
     useEffect(() => { loadStats(); }, []);
 
-    // ── Loading ───────────────────────────────────────────────────────────
+    // ── Loading skeleton ───────────────────────────────────────────────────
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <div className="relative">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="space-y-8 p-1">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="space-y-2">
+                        <Skeleton className="h-9 w-44 rounded-lg" />
+                        <Skeleton className="h-4 w-72 rounded" />
                     </div>
+                    <Skeleton className="h-8 w-24 rounded-lg" />
                 </div>
-                <p className="text-muted-foreground text-sm font-medium">Loading dashboard…</p>
+
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <Card key={i} className="relative overflow-hidden border-0 shadow-md">
+                            <CardContent className="p-6">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-2.5 flex-1 min-w-0">
+                                        <Skeleton className="h-3 w-24 rounded" />
+                                        <Skeleton className="h-10 w-16 rounded" />
+                                        <Skeleton className="h-3 w-36 rounded" />
+                                        <Skeleton className="h-5 w-14 rounded-full mt-1" />
+                                    </div>
+                                    <Skeleton className="h-12 w-12 rounded-2xl flex-shrink-0" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Charts Row 1 — area + bar */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <Card key={i} className="border border-border/60 shadow-sm">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-4 w-4 rounded" />
+                                    <Skeleton className="h-5 w-36 rounded" />
+                                </div>
+                                <Skeleton className="h-3 w-48 rounded mt-1" />
+                            </CardHeader>
+                            <CardContent>
+                                {/* Skeleton chart — faux bars/lines */}
+                                <div className="h-56 flex items-end gap-2 px-2 pb-2">
+                                    {[55, 70, 45, 85, 60, 75, 50, 90, 65, 80].map((h, j) => (
+                                        <Skeleton
+                                            key={j}
+                                            className="flex-1 rounded-t-md"
+                                            style={{ height: `${h}%` }}
+                                        />
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Charts Row 2 — 3 pie charts */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="border border-border/60 shadow-sm">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-4 w-4 rounded" />
+                                    <Skeleton className="h-5 w-28 rounded" />
+                                </div>
+                                <Skeleton className="h-3 w-40 rounded mt-1" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-52 flex flex-col items-center justify-center gap-4">
+                                    {/* Donut ring placeholder */}
+                                    <Skeleton className="h-32 w-32 rounded-full" style={{ borderRadius: '50%' }} />
+                                    {/* Legend rows */}
+                                    <div className="flex gap-3">
+                                        {Array.from({ length: 3 }).map((_, j) => (
+                                            <div key={j} className="flex items-center gap-1.5">
+                                                <Skeleton className="h-2.5 w-2.5 rounded-full" />
+                                                <Skeleton className="h-2.5 w-12 rounded" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Bottom Row — key metrics + recent classes */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Key metrics */}
+                    <Card className="border border-border/60 shadow-sm">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-4 rounded" />
+                                <Skeleton className="h-5 w-28 rounded" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-5">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <Skeleton className="h-3 w-28 rounded" />
+                                        <Skeleton className="h-3 w-6 rounded" />
+                                    </div>
+                                    <Skeleton className="h-2 w-full rounded-full" />
+                                    <div className="flex justify-end">
+                                        <Skeleton className="h-3 w-8 rounded" />
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent classes */}
+                    <Card className="border border-border/60 shadow-sm lg:col-span-2">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-4 w-4 rounded" />
+                                <Skeleton className="h-5 w-32 rounded" />
+                            </div>
+                            <Skeleton className="h-3 w-48 rounded mt-1" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/40"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <Skeleton className="h-9 w-9 rounded-lg flex-shrink-0" />
+                                            <div className="space-y-1.5 min-w-0">
+                                                <Skeleton className="h-3.5 rounded" style={{ width: `${[140, 110, 160, 130, 120][i]}px` }} />
+                                                <Skeleton className="h-3 w-24 rounded" />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0 ml-3">
+                                            <Skeleton className="h-5 w-14 rounded-full" />
+                                            <Skeleton className="h-3 w-10 rounded" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         );
     }
